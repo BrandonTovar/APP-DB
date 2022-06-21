@@ -43,29 +43,22 @@ Nombre de error, descripción y como solucionarlo
     Solución:       Este error se solucionara si el equipo reseptor vuelve a estar en linea o seleccionando otra carpeta.
 
 
-# Errores por numero | Solo visibles en las opciones para la base de datos.
+## Codigos de error y sus significados
+Solo visibles en las opciones para la base de datos.
 
-   +----------------------------------------------------------------------------+
-   |E001: | Error al conectar con la base de datos                              |
-   +----------------------------------------------------------------------------+
-   |E002: | Error al buscar bases de datos                                      |
-   |E003: | Error al buscar tablas                                              |
-   +----------------------------------------------------------------------------+
-   |E004: | Error al borrar la base de datos                                    |
-   |E005: | Error al borrar la tabla                                            |
-   +----------------------------------------------------------------------------+
-   |E006: | Error al limpiar la base de datos                                   |
-   |E007: | Error al limpiar la tabla                                           |
-   +----------------------------------------------------------------------------+
-   |E008: | Error al crear la copia de la base de datos                         |
-   |E009: | Error al crear la copia de la tabla                                 |
-   +----------------------------------------------------------------------------+
-   |E010: | Error al restablecer la base de datos                               | 
-   |E011: | Error al restablecer la tabla                                       | 
-   +----------------------------------------------------------------------------+
-   |E012: | Error al iniciar el servicio                                        | 
-   |E013: | Error al detener el servicio                                        | 
-   +----------------------------------------------------------------------------+
-   |E014: | Error al subir los valores                                          | 
-   |E015: | Error al eliminar los valores                                       | 
-   +----------------------------------------------------------------------------+
+    E001: | Error al conectar con la base de datos
+    E002: | Error al buscar bases de datos                                      
+    E003: | Error al buscar tablas
+    E004: | Error al borrar la base de datos
+    E005: | Error al borrar la tabla
+    E006: | Error al limpiar la base de datos
+    E007: | Error al limpiar la tabla
+    E008: | Error al crear la copia de la base de datos
+    E009: | Error al crear la copia de la tabla
+    E010: | Error al restablecer la base de datos
+    E011: | Error al restablecer la tabla 
+    E012: | Error al iniciar el servicio
+    E013: | Error al detener el servicio
+    E014: | Error al subir los valores
+    E015: | Error al eliminar los valores
+
