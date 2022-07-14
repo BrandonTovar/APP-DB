@@ -10,21 +10,18 @@ espero que este, mi primer programa sirva como una guia mas bien de lo que no se
 from pathlib import Path
 from datetime import date, datetime
 from glob import glob
-from os import getcwd, popen, remove, rename
+from os import mkdir, popen, remove
 from os.path import basename, getmtime, split
 from shutil import copy
+import sys
 from threading import Thread
-from time import sleep
-from tkinter import (BOTH, DISABLED, END, NORMAL, SINGLE, Button, Canvas,
-                     Entry, IntVar, Label, Listbox, PhotoImage, Radiobutton, Scrollbar,
-                     StringVar, Text, Tk, W)
+from tkinter import (BOTH, DISABLED, END, NORMAL, SINGLE, Button, Canvas, Entry, IntVar, Label, Listbox, PhotoImage, Radiobutton, Scrollbar, StringVar, Text, Tk, W)
 from tkinter.filedialog import askdirectory as askdir
 from tkinter.filedialog import askopenfile
 from tkinter.messagebox import NO, askokcancel, askyesnocancel, showerror, showwarning
 from tkinter.ttk import Treeview
 from xml.dom import minidom
 from idlelib.tooltip import Hovertip
-    
 import requests
 from genericpath import exists, isfile
 from MySQLdb import connect
@@ -57,24 +54,14 @@ global e_host; e_host = ""
 global directory
 
 # Definicion de funciones
+def createFolder(folder):
+    if not exists(folder):
+        try: mkdir(folder); return True
+        except: return False
+    else: return None
 def createIcon(name, value):
-    from os import mkdir, getcwd
-    from genericpath import exists
     global directory
-    directory = Path(popen("echo %ProgramFiles%").read().replace("\n", "")).joinpath("icons")
-    if not exists(directory):
-        try: mkdir(directory)
-        except: 
-            directory = Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("icons")
-            if not exists(directory):
-                try: mkdir(directory)
-                except: 
-                    directory = Path(getcwd()).joinpath("icons")
-                    if not exists(directory):
-                        try: mkdir(directory)
-                        except: directory = "."
 
-        
     try: 
         image_64_decode = base64.decodebytes(value) 
         image_result = open(Path(directory).joinpath(f'{name}.png'), 'wb') # create a writable image and write the decoding result
@@ -84,47 +71,27 @@ def createIcon(name, value):
 def save():
     def m_dir(ruta=""):
         def create(name):
-            from os import mkdir
-
-            from genericpath import exists
-
             # Si la ruta no existe
             if not exists(name):
                 # Intentear crear la carpeta
-                try:
-                    mkdir(name)
-                    return True
-                except:
-                    return False
-            else:
-                return None
+                try: mkdir(name); return True
+                except: return False
+            else: return None
 
-        from os import popen
-        from pathlib import Path
         directory = popen("echo %ProgramFiles%").read().replace("\n", "")
         if "\\" in ruta or "/" in ruta:
             path = directory
-            if "\\" in ruta:
-                names = ruta.split("\\")
-            elif "/" in ruta:
-                names = ruta.split("/")
+            if "\\" in ruta: names = ruta.split("\\")
+            elif "/" in ruta: names = ruta.split("/")
             for folder in names:
                 path = Path(path).joinpath(folder)
-                if create(path) == False:
-                    return False
+                if create(path) == False: return False
             return True
-
-        else:
-            return create(Path(directory).joinpath(ruta))
-
-    # Create directory in init
-    from os import popen
-    from pathlib import Path
+        else: return create(Path(directory).joinpath(ruta))
 
     # Variables
     m_dir("UpdateDB")
-    directory = Path(popen("echo %ProgramFiles%").read().replace(
-        "\n", "")).joinpath("UpdateDB")
+    directory = Path(popen("echo %ProgramFiles%").read().replace("\n", "")).joinpath("UpdateDB")
 
     # Creción del archivo "name"
     file = Path(directory).joinpath("config.ini")
@@ -179,10 +146,9 @@ def save():
         with open(file, "w") as config_file:
             config.write(config_file)
     except:
-        path = Path(popen("echo %TEMP%").read().replace("\n", ""))
+        path = Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("UpdateDB")
         file = Path(path).joinpath("config.ini")
-        with open(file, "w") as config_file:
-            config.write(config_file)
+        with open(file, "w") as config_file: config.write(config_file)
 def readConfig():
     global directory
     from pathlib import Path
@@ -256,10 +222,9 @@ def readConfig():
         if user.get() != "" and host.get() != "":
             enable("test")
         DB_Buttons.testConnection()
-    elif exists(Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("config.ini")):
-        directory = Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("config.ini")
-        def wrEntrys(key, content): root.children.get(key).delete(
-            0, "end"); root.children.get(key).insert(0, content)
+    elif exists(Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("UpdateDB\\config.ini")):
+        directory = Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("UpdateDB\\config.ini")
+        def wrEntrys(key, content): root.children.get(key).delete(0, "end"); root.children.get(key).insert(0, content)
         import configparser
 
         # Reading Data
@@ -320,8 +285,7 @@ def readConfig():
                     except:
                         pass
 
-        if user.get() != "" and host.get() != "":
-            enable("test")
+        if user.get() != "" and host.get() != "": enable("test")
         DB_Buttons.testConnection()
 def setVal(name, value): globals()[name] = value
 def getVal(name): return [globals()[name] if name in globals() else None][0]
@@ -545,6 +509,52 @@ def copyFile(file):
     else:
         if Path(file).suffix == ".xml" or Path(file).suffix == ".pdf":
             return copy(file, f_dstn)
+def wtchDog_dstn():
+    class FileEventHandler(FileSystemEventHandler):
+        def on_deleted(self, event):
+            if not event.is_directory:
+                file = event.src_path
+                if DB_Buttons.Comprobacion.isxml(file):
+                    pdf = DB_Buttons.Comprobacion.withPDF(file)
+                    if pdf != False:
+                        if getVal("pause") == True:
+                            folio = DB_Buttons.get_fol(f_dstn + basename(pdf))
+                            slopes[folio] = "remove"
+                        else:
+                            try: 
+                                if getVal("active") == True:
+                                    folio = DB_Buttons.get_fol(file)
+                                    DB_Buttons.drop(folio) 
+                                remove(pdf)
+                                
+                                lb.insert("", 0, values=(f"Eliminado: {file}",))
+                                lb.insert("", 0, values=(f"Eliminado: {pdf}",))
+                            except: pass
+                else: 
+                    xml = DB_Buttons.Comprobacion.withXML(file)
+                    if getVal("pause") == True:
+                        folio = DB_Buttons.get_fol(f_dstn + basename(xml))
+                        slopes[folio] = "remove"
+                    else:
+                        if xml != False:
+                            try:
+                                if getVal("active") == True:
+                                    folio = DB_Buttons.get_fol(file)
+                                    DB_Buttons.drop(folio) 
+                                remove(xml)
+                                lb.insert("", 0, values=(f"Eliminado: {file}",))
+                                lb.insert("", 0, values=(f"Eliminado: {xml}",))
+                            except: pass
+
+    if __name__ == "__main__":
+        import time
+        global watchdog_dst
+        event_handler = FileEventHandler()
+        watchdog_dst = Observer()
+        watchdog_dst.daemon = True; watchdog_dst.schedule(event_handler, f_dstn, False); watchdog_dst.start()
+        try: 
+            while watchdog_dst.is_alive(): time.sleep(int(timesleep.get()))
+        except KeyboardInterrupt: watchdog_dst.stop()
 def start_watchdog():
     class FileEventHandler(FileSystemEventHandler):
         def on_created(self, event):
@@ -553,12 +563,11 @@ def start_watchdog():
                     try:
                         global slopes
                         if copyFile(event.src_path) == f_dstn+basename(event.src_path):
-                            if Path(event.src_path).suffix == ".xml":
-                                lb.insert("", 0, values=(f"Nuevo: {basename(event.src_path)}",))
+                            if Path(event.src_path).suffix == ".xml": lb.insert("", 0, values=(f"Nuevo: {basename(event.src_path)}",))
                             if getVal("active") and exists(f_dstn + basename(event.src_path)):
                                 folio = DB_Buttons.get_fol(f_dstn + basename(event.src_path)) 
-                                if folio in slopes: slopes.pop(folio)
                                 DB_Buttons.send(f_dstn + basename(event.src_path))
+                                if folio in slopes: slopes.pop(folio)
                             elif getVal("pause") == True and exists(f_dstn + basename(event.src_path)):
                                 folio = DB_Buttons.get_fol(f_dstn + basename(event.src_path))
                                 slopes[folio] = "add"
@@ -620,7 +629,6 @@ def start_watchdog():
                         elif option == None:
                             GUI.Messages.E_DRA_D(event.src_path)
                             F_Buttons.stop()
-
     if __name__ == "__main__":
         import time
         global watchdog
@@ -629,6 +637,7 @@ def start_watchdog():
         event_handler = FileEventHandler()
         watchdog.schedule(event_handler, f_orgn, False)
         watchdog.start()
+        wtchDog_dstn()
         try:
             while watchdog.is_alive(): time.sleep(int(timesleep.get()))
         except KeyboardInterrupt: watchdog.stop()
@@ -663,7 +672,7 @@ class F_Buttons:
             disable("start", "btn_origen", "btn_destino", "day", "month", "year", "etr_origen", "etr_destino", "si", "no")
         else: print("Ingrese un directorio valido")
     def stop(): 
-        global watchdog; setVal("switch", False); disable("detain"); watchdog.stop()
+        global watchdog; setVal("switch", False); disable("detain"); watchdog.stop(); watchdog_dst.stop()
         enable("start", "btn_origen", "btn_destino", "day", "month", "year", "etr_origen", "etr_destino", "empty", "si", "no")
         root.children["init"].configure(text="Actualizar")
         root.children["stop"].configure(text="Finalizar")
@@ -773,7 +782,8 @@ class DB_Buttons:
         if len(values) != 0:
 
             popup = Tk()
-            popup.iconbitmap('/path/to/ico/icon.ico')
+            try: popup.iconbitmap('/path/to/ico/icon.ico')
+            except: pass
             
             popup.overrideredirect(True)
             popup.configure(borderwidth=1, relief="solid")
@@ -836,7 +846,8 @@ class DB_Buttons:
         if len(values) != 0:
                 
             popup = Tk()
-            popup.iconbitmap('/path/to/ico/icon.ico')
+            try: popup.iconbitmap('/path/to/ico/icon.ico')
+            except: pass
 
             popup.overrideredirect(True)
             popup.configure(borderwidth=1, relief="solid", bg="red")
@@ -1060,7 +1071,7 @@ class DB_Buttons:
                 if S_DBa.itemcget(1, "fill") == "#06DC13": S_DBa.itemconfigure(1, fill="#05C511") # change color
                 else: S_DBa.itemconfigure(1, fill="#06DC13") # change color
 
-            while getVal("active"): change(); time.sleep(0.5)
+            while getVal("active") and getVal("pause") == True: change(); time.sleep(0.5)
         
         Thread(target=changeColorDBa).start()
 
@@ -1145,10 +1156,10 @@ class DB_Buttons:
         try: run_query(query); lb.insert("", 0, values=(f"Se creo la columna {column}, reintentando proceso",)); return True
         except: lb.insert("", 0, values=(f"E018:{DB_Buttons.timing()} Error al crear la columna",)); return False
 
-    class Compprobacion:
+    class Comprobacion:
         def isxml(file):
             exttn = Path(file).suffix
-            if isfile(file) and exttn == ".xml": return True
+            if exttn == ".xml": return True
             else: return False
 
         def columnExists(column): 
@@ -1161,13 +1172,13 @@ class DB_Buttons:
                     return False
             except: return None
 
-        def inName(name=str):
+        def inName(name="xml"):
             # Extraer el folio del nombre del archivo tomando en cuenta los dos formatos conocidos
             # FACT: ALTA_123456_NUMEROSERIALDELCLIENTE.xml
             # TEST: ALTA_123456.xml
             folio = DB_Buttons.get_fol(name)
             if str(name).find(f"_{folio}_") != -1: indx = str(name).find(f"_{folio}_")
-            elif str(name).find(f"_{folio}.xml") != -1: indx = str(name).find(f"_{folio}.xml")
+            elif str(name).find(f"_{folio}.") != -1: indx = str(name).find(f"_{folio}.")
             else: indx=-1
             
             # Comprobar que el folio exista en el nombre
@@ -1177,6 +1188,18 @@ class DB_Buttons:
                 else: return False
             else: return False
 
+        def withPDF(file=str):
+            name = Path(basename(file)).stem
+            folder = Path(file).parent
+
+            if exists(Path(folder).joinpath(f"{name}.pdf")): return Path(folder).joinpath(f"{name}.pdf")
+            else: return False
+        def withXML(file=str):
+            name = Path(basename(file)).stem
+            folder = Path(file).parent
+
+            if exists(Path(folder).joinpath(f"{name}.xml")): return Path(folder).joinpath(f"{name}.xml")
+            else: return False
     def rename(old, new):
         # Creamos las variables "nuevo nombre base: bn_new"
         bn_new = basename(new)
@@ -1191,7 +1214,7 @@ class DB_Buttons:
         def action():
             folio = DB_Buttons.get_fol(new_d)
             # Comprobamos el folio dentro del archivo en destino)
-            if DB_Buttons.Compprobacion.inName(new_d):
+            if DB_Buttons.Comprobacion.inName(new_d):
                 if getVal("pause") == True:
                     if folio != None: slopes[folio] = "edit"
                 else:
@@ -1278,7 +1301,7 @@ class DB_Buttons:
                     if exists(old_d): remove(old_d) 
 
         # Comprobamos que el archivo recibido sea un xml
-        if DB_Buttons.Compprobacion.isxml(new):
+        if DB_Buttons.Comprobacion.isxml(new):
             # Comprobamos la existencia del archivo en la carpeta destino
             if exists(new_d): action()
             else: 
@@ -1286,7 +1309,7 @@ class DB_Buttons:
                     renamePDF()
                     if getVal("active") and getVal("pause") == True: 
                         # Comprobamos la existencia de una columna folio en la base de datos
-                        if DB_Buttons.Compprobacion.columnExists("Folio"): action()
+                        if DB_Buttons.Comprobacion.columnExists("Folio"): action()
                         else:
                             # Crear la columna folio mediante run_query
                             try: 
@@ -1392,14 +1415,14 @@ class F_Entrys:
 class GUI:
     def __init__(self, master):
         master.configure(width=680, height=400)
-        master.title("Test GUI")
+        master.title("UpdateDB")
         master.maxsize(width=840, height=400)
         master.minsize(width=680, height=400)
         def rootExit():
             if getVal("switch") != None and getVal("watchdog") != None:
                 if getVal("switch") == True or getVal("watchdog").is_alive():
                     if askokcancel("Salir", "Si cierra el programa se perdera toda la informacion.\n\n¿desea cerrar el programa de todos modos?"):
-                        getVal("watchdog").stop(); save(); root.destroy()
+                        getVal("watchdog").stop(); getVal("watchdog_dst").stop();save(); root.destroy()
                         try: confMail.destroy()
                         except:pass
                 else:
@@ -1771,7 +1794,8 @@ class GUI:
 
             global confMail
             confMail = Tk()
-            confMail.iconbitmap('/path/to/ico/icon.ico')
+            try: confMail.iconbitmap('/path/to/ico/icon.ico')
+            except: pass
 
             confMail.title("Configuración de correos")
             x_root = root.winfo_x()
@@ -1854,20 +1878,25 @@ class GUI:
 # Inicializacion del programa
 if __name__ == "__main__":
     root = Tk()
-    root.iconbitmap('/path/to/ico/icon.ico')
-    from genericpath import exists; from os import mkdir
-    directory = Path(popen("echo %ProgramFiles%").read().replace("\n", "")).joinpath("icons")
-    if not exists(directory):
-        try: mkdir(directory)
-        except: 
-            directory = Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("icons")
-            if not exists(directory):
-                try: mkdir(directory)
-                except: 
-                    directory = Path(getcwd()).joinpath("icons")
-                    if not exists(directory):
-                        try: mkdir(directory)
-                        except: directory = "."
+    try: root.iconbitmap('/path/to/ico/icon.ico')
+    except: pass
+    directory = Path(popen("echo %ProgramFiles%").read().replace("\n", "")).joinpath("UpdateDB")
+    if createFolder(directory) != False:
+        directory = Path(str(directory)).joinpath("icons")
+        if createFolder(directory) == False:
+            directory = Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("UpdateDB")
+            if createFolder(directory) != False:
+                directory = Path(directory).joinpath("icons")
+                if createFolder(directory) == False:
+                    directory = "."      
+    else: 
+        directory = Path(popen("echo %TEMP%").read().replace("\n", "")).joinpath("UpdateDB")
+        if createFolder(directory) != False:
+            directory = Path(directory).joinpath("icons")
+            if createFolder(directory) == False:
+                directory = "."
+        else: directory = "."
+
     # Iconos
     if not exists(Path(directory).joinpath("b_search.png")): createIcon("b_search", b_b_search)
     if not exists(Path(directory).joinpath("b_drop.png")): createIcon("b_drop", b_b_drop)
