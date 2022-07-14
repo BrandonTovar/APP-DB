@@ -44,7 +44,9 @@ Nombre de error, descripción y como solucionarlo
 
 
 ## Codigos de error y sus significados
-Solo visibles en las opciones para la base de datos.
+>Lista con los errores documentados durante el desarrollo
+
+
 
     E001: | Error al conectar con la base de datos
     E002: | Error al buscar bases de datos                                      
@@ -61,4 +63,20 @@ Solo visibles en las opciones para la base de datos.
     E013: | Error al detener el servicio
     E014: | Error al subir los valores
     E015: | Error al eliminar los valores
+    E016: | Error al crear la tabla
+    E017: | Error al buscar la columna
+    E018: | Error al crear la columna
+    E019: | Error al actualizar el folio
+    E020: | Se elimino el folio de la tabla por que el nombre del archivo no lo contiene
+    E021: | El archivo eliminado en origen no existe en destino
+    E022: | El archivo renombrado no tiene el folio en su nombre
+    E023: | Error al crear la base de datos
+    E024: | Error al crear la tabla
+    E025: | El folio extraido no coincide con el del nombre
+    E026: | No cuentas con los permisos necesarios
+    E000: | Ocurrio un error inesperado, verifica tu informacion
+    E027: | Se altero el archivo compañero en origen y en destino no existen como grupo
 
+
+
+# 
